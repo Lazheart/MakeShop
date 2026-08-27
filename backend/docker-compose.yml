@@ -1,0 +1,68 @@
+services:
+  product-service:
+    image: lazheart/product-service:latest
+    container_name: product-service
+    ports:
+      - "8000:8000"
+    environment:
+      - STORE_SERVICE_URL=http://store-service:8004
+      - AWS_REGION=${AWS_REGION}
+      - BUCKET_NAME=${BUCKET_NAME}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${DB_HOST}:27017/productdb?authSource=admin
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+  shop-service:
+    image: lazheart/shop-service:latest
+    container_name: shop-service
+    ports:
+      - "3000:3000"
+    environment:
+      - STORE_SERVICE_URL=http://store-service:8004
+      - SHOP_DATABASE_URL_PRISMA=mysql://${SHOP_DB_USERNAME}:${SHOP_DB_PASSWORD}@${DB_HOST}:3307/${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - JWT_SECRET=${JWT_SECRET}
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/healthcheck').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1));\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+  user-service:
+    image: lazheart/user-service:latest
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - JPA_DDL_AUTO=${JPA_DDL_AUTO}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  store-service:
+    image: lazheart/store-service:latest
+    container_name: store-service
+    ports:
+      - "8004:8004"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      shop-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
