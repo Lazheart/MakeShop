@@ -1,4 +1,4 @@
-# OpenStore
+# MakeShop
 
 Plataforma de e-commerce open source, autohosteable y basada en microservicios. Permite gestionar múltiples tiendas, productos y usuarios con una arquitectura desacoplada lista para nube.
 
@@ -31,7 +31,3 @@ La documentación técnica completa está disponible en [`docs/index.html`](docs
 - **Infraestructura** — recursos AWS y red
 - **Despliegue** — paso a paso con CloudFormation + Amplify
 - **Data Ingest** — scripts de ingesta y queries Athena
-
-## Estado
-
-Proyecto en desarrollo activo.

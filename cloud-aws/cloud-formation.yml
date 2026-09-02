@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "OpenStore: 2 App Servers detrás de ALB, 1 DB Server y bucket S3 "
+Description: "MakeShop: 2 App Servers detrás de ALB, 1 DB Server y bucket S3 "
 
 Parameters:
   InstanceName:
     Type: String
-    Default: "MV-OpenShop"
+    Default: "MV-MakeShop"
     Description: "Maquina Virtual 1"
   AMI:
     Type: String
@@ -269,8 +269,8 @@ Resources:
           set -e
           exec > /var/log/user-data.log 2>&1
           cd /home/ubuntu
-          git clone https://github.com/Lazheart/OpenStore
-          cd OpenStore
+          git clone https://github.com/Lazheart/MakeShop
+          cd MakeShop
           sudo rm -rf frontend
           sudo rm -rf database
           cd ..
@@ -299,8 +299,8 @@ Resources:
           set -e
           exec > /var/log/user-data.log 2>&1
           cd /home/ubuntu
-          git clone https://github.com/Lazheart/OpenStore
-          cd OpenStore
+          git clone https://github.com/Lazheart/MakeShop
+          cd MakeShop
           sudo rm -rf frontend
           sudo rm -rf database
           cd ..
@@ -327,8 +327,8 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           cd /home/ubuntu
-          git clone https://github.com/Lazheart/OpenStore
-          cd OpenStore
+          git clone https://github.com/Lazheart/MakeShop
+          cd MakeShop
           sudo rm -rf frontend
           sudo rm -rf backend
           cd database
@@ -339,7 +339,7 @@ Resources:
   ImagesBucket:
     Type: "AWS::S3::Bucket"
     Properties:
-      BucketName: !Sub "openstore-products-${AWS::AccountId}"
+      BucketName: !Sub "makeshop-products-${AWS::AccountId}"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         IgnorePublicAcls: true
@@ -349,7 +349,7 @@ Resources:
   ProfilePictureBucket:
     Type: "AWS::S3::Bucket"
     Properties:
-      BucketName: !Sub "openstore-profile-pictures-${AWS::AccountId}"
+      BucketName: !Sub "makeshop-profile-pictures-${AWS::AccountId}"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         IgnorePublicAcls: true
