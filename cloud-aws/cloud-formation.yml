@@ -43,7 +43,7 @@ Parameters:
     Description: "Subnet pública 2 (para ALB y EC2 con IP pública)"
   FrontendRepoUrl:
     Type: String
-    Default: "https://github.com/Lazheart/OpenStore"
+    Default: "https://github.com/Lazheart/MakeShop"
     Description: "Repositorio Git para Amplify (publico o privado)"
   FrontendBranchName:
     Type: String
