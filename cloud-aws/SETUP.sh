@@ -7,6 +7,72 @@ if [ -f ".env" ]; then
   set +a
 fi
 
+# Cargar credenciales desde ~/.aws/credentials y ~/.aws/config si faltan
+PROFILE="${AWS_PROFILE:-default}"
+AWS_CREDENTIALS_FILE="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+AWS_CONFIG_FILE="${AWS_CONFIG_FILE:-$HOME/.aws/config}"
+
+get_aws_ini_val() {
+  local file="$1"
+  local sec="$2"
+  local key="$3"
+  if [ -f "$file" ]; then
+    awk -v sec="$sec" -v key="$key" '
+      $0 ~ "^[[:space:]]*\\[" {
+        line = $0;
+        sub(/^[[:space:]]*\\[/, "", line);
+        sub(/\\][[:space:]]*$/, "", line);
+        sub(/^profile /, "", line);
+        current_sec = line;
+        next;
+      }
+      current_sec == sec && $0 ~ "=" {
+        idx = index($0, "=");
+        k = substr($0, 1, idx - 1);
+        v = substr($0, idx + 1);
+        sub(/^[[:space:]]+/, "", k); sub(/[[:space:]]+$/, "", k);
+        sub(/^[[:space:]]+/, "", v); sub(/[[:space:]]+$/, "", v);
+        if (k == key) {
+          print v;
+          exit;
+        }
+      }
+    ' "$file" 2>/dev/null || true
+  fi
+}
+
+if [ -z "${AWS_ACCESS_KEY_ID:-}" ]; then
+  VAL="$(aws configure get aws_access_key_id 2>/dev/null || true)"
+  [ -z "$VAL" ] && VAL="$(get_aws_ini_val "$AWS_CREDENTIALS_FILE" "$PROFILE" "aws_access_key_id")"
+  if [ -n "$VAL" ]; then
+    export AWS_ACCESS_KEY_ID="$VAL"
+  fi
+fi
+
+if [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+  VAL="$(aws configure get aws_secret_access_key 2>/dev/null || true)"
+  [ -z "$VAL" ] && VAL="$(get_aws_ini_val "$AWS_CREDENTIALS_FILE" "$PROFILE" "aws_secret_access_key")"
+  if [ -n "$VAL" ]; then
+    export AWS_SECRET_ACCESS_KEY="$VAL"
+  fi
+fi
+
+if [ -z "${AWS_SESSION_TOKEN:-}" ]; then
+  VAL="$(aws configure get aws_session_token 2>/dev/null || true)"
+  [ -z "$VAL" ] && VAL="$(get_aws_ini_val "$AWS_CREDENTIALS_FILE" "$PROFILE" "aws_session_token")"
+  if [ -n "$VAL" ]; then
+    export AWS_SESSION_TOKEN="$VAL"
+  fi
+fi
+
+if [ -z "${AWS_REGION:-}" ] && [ -z "${AWS_DEFAULT_REGION:-}" ]; then
+  VAL="$(aws configure get region 2>/dev/null || true)"
+  [ -z "$VAL" ] && VAL="$(get_aws_ini_val "$AWS_CONFIG_FILE" "$PROFILE" "region")"
+  if [ -n "$VAL" ]; then
+    export AWS_REGION="$VAL"
+  fi
+fi
+
 # 1) Variables base
 STACK_NAME="openstore-stack"
 TEMPLATE_FILE="cloud-formation.yml"
