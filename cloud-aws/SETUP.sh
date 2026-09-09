@@ -248,7 +248,7 @@ aws cloudformation deploy \
   --template-file "$TEMPLATE_FILE" \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
-    InstanceName=MV-OpenShop \
+    InstanceName="${INSTANCE_NAME:-MV-MakeShop}" \
     AMI=ami-08d434e92c0cfa0c0 \
     KeyName="$KEY_NAME" \
     InstanceType=t3.medium \
@@ -256,9 +256,9 @@ aws cloudformation deploy \
     VpcId="$VPC_ID" \
     PublicSubnet1="$SUBNET1" \
     PublicSubnet2="$SUBNET2" \
-    FrontendRepoUrl=https://github.com/Lazheart/OpenStore \
-    FrontendBranchName=main \
-    FrontendAmplifyAppName=openstore-frontend \
+    FrontendRepoUrl="${FRONTEND_REPO_URL:-https://github.com/Lazheart/MakeShop}" \
+    FrontendBranchName="${FRONTEND_BRANCH_NAME:-main}" \
+    FrontendAmplifyAppName="${FRONTEND_AMPLIFY_APP_NAME:-makeshop-frontend}" \
     FrontendAmplifyAccessToken="$FRONTEND_AMPLIFY_ACCESS_TOKEN"
 
 # 5) Ver outputs finales (ALB/Amplify)

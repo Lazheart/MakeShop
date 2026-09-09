@@ -51,7 +51,7 @@ Parameters:
     Description: "Branch del repositorio a desplegar en Amplify"
   FrontendAmplifyAppName:
     Type: String
-    Default: "openstore-frontend"
+    Default: "makeshop-frontend"
     Description: "Nombre de la app de Amplify"
   FrontendAmplifyAccessToken:
     Type: String
