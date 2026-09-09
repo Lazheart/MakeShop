@@ -32,8 +32,28 @@ if [ -z "$VPC_ID" ]; then
   fi
 fi
 
+# Fallback: Si no hay VPC por defecto, intenta tomar la primera VPC que exista en la región
 if [ -z "$VPC_ID" ]; then
-  echo "No se encontro VPC_ID. Define VPC_ID en .env o crea/usa una VPC por defecto en $AWS_REGION_VALUE." >&2
+  VPC_ID="$(aws ec2 describe-vpcs \
+    --region "$AWS_REGION_VALUE" \
+    --query 'Vpcs[0].VpcId' \
+    --output text 2>/dev/null || true)"
+
+  if [ "$VPC_ID" = "None" ]; then
+    VPC_ID=""
+  fi
+fi
+
+if [ -z "$VPC_ID" ]; then
+  echo "ERROR: No se pudo obtener ninguna VPC_ID en la region $AWS_REGION_VALUE." >&2
+  echo "" >&2
+  echo "Causas posibles:" >&2
+  echo " 1. Si usas credenciales temporales (tu AWS_ACCESS_KEY_ID inicia con 'ASIA'), te falta incluir AWS_SESSION_TOKEN en el archivo .env." >&2
+  echo " 2. Tu cuenta en $AWS_REGION_VALUE no tiene una VPC por defecto ni otra VPC activa." >&2
+  echo "" >&2
+  echo "Solución:" >&2
+  echo " - Agrega 'VPC_ID=vpc-xxxxxxxxx' manualmente en tu archivo .env" >&2
+  echo " - Si usas AWS Academy / Learner Lab / SSO, agrega 'AWS_SESSION_TOKEN=...' en tu archivo .env" >&2
   exit 1
 fi
 
