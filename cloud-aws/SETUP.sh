@@ -267,3 +267,25 @@ aws cloudformation describe-stacks \
   --stack-name "$STACK_NAME" \
   --query "Stacks[0].Outputs[].[OutputKey,OutputValue]" \
   --output table
+
+# 6) Iniciar compilación y despliegue automático del Frontend en AWS Amplify
+APP_ID="$(aws cloudformation describe-stacks \
+  --region "$AWS_REGION_VALUE" \
+  --stack-name "$STACK_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='FrontendAmplifyAppId'].OutputValue" \
+  --output text 2>/dev/null || true)"
+
+BRANCH_NAME="${FRONTEND_BRANCH_NAME:-main}"
+
+if [ -n "$APP_ID" ] && [ "$APP_ID" != "None" ]; then
+  echo ""
+  echo " Iniciando despliegue automático en AWS Amplify (AppID: $APP_ID, Branch: $BRANCH_NAME)..."
+  aws amplify start-job \
+    --region "$AWS_REGION_VALUE" \
+    --app-id "$APP_ID" \
+    --branch-name "$BRANCH_NAME" \
+    --job-type RELEASE \
+    --job-reason "Despliegue automatico post-provisionamiento desde SETUP.sh" >/dev/null && \
+    echo " Compilación de Amplify iniciada correctamente. No necesitas iniciarla manualmente desde la consola." || \
+    echo "  No se pudo iniciar el job de Amplify automáticamente. Revisa permisos de AWS CLI."
+fi
