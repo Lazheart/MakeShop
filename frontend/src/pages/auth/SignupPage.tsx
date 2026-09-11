@@ -110,17 +110,17 @@ if (
         <div style={{ maxWidth: '400px', margin: '0', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
           <Link to="/" className="sidebar-logo" style={{ marginBottom: '3rem', textDecoration: 'none', color: 'inherit', display: 'inline-flex', alignItems: 'center' }}>
             <Store size={32} />
-            <span style={{ fontSize: '1.75rem', marginLeft: '0.5rem' }}>Open</span><span style={{ color: 'var(--primary)', fontSize: '1.75rem' }}>Store</span>
+            <span style={{ fontSize: '1.75rem', marginLeft: '0.5rem' }}>Make</span><span style={{ color: 'var(--primary)', fontSize: '1.75rem' }}>Shop</span>
           </Link>
 
-          <h2 style={{ fontSize: '3rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>Start your journey with <span style={{ color: 'var(--primary)' }}>OpenStore</span>.</h2>
+          <h2 style={{ fontSize: '3rem', marginBottom: '1.5rem', lineHeight: 1.1 }}>Start your journey with <span style={{ color: 'var(--primary)' }}>MakeShop</span>.</h2>
           <p style={{ fontSize: '1.25rem', color: '#A0A0A0', marginBottom: '3rem', lineHeight: 1.6 }}>
             Join thousands of merchants who are building their dream businesses on our high-performance platform.
           </p>
           
           <div className="card" style={{ backgroundColor: '#121212', border: '1px solid #2C2C2C', color: '#fff', textAlign: 'left', width: '100%' }}>
             <p style={{ fontSize: '1.125rem', fontStyle: 'italic', marginBottom: '1.5rem' }}>
-              "OpenStore completely transformed how we sell online. The setup was instant, and the design tools are incredibly powerful."
+              "MakeShop completely transformed how we sell online. The setup was instant, and the design tools are incredibly powerful."
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <img src="https://raw.githubusercontent.com/D3Ext/aesthetic-wallpapers/refs/heads/main/images/android-sakura.jpg" alt="Profile" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
