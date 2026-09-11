@@ -19,7 +19,7 @@ export const PublicLayout: React.FC = () => {
       }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
           <Store size={28} color="var(--primary)" />
-          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-color)' }}>Open<span style={{ color: 'var(--primary)' }}>Store</span></span>
+          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-color)' }}>Make<span style={{ color: 'var(--primary)' }}>Shop</span></span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <nav style={{ gap: '1.5rem', display: 'none', '@media (min-width: 768px)': { display: 'flex' } } as any}>
