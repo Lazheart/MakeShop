@@ -7,7 +7,7 @@ export const Sidebar: React.FC = () => {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <Store size={28} />
-        <span>Open</span>Store
+        <span>Make</span>Shop
       </div>
       
       <nav style={{ flex: 1 }}>  
