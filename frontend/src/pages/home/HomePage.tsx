@@ -7,7 +7,7 @@ export default function HomePage() {
     <div className="animate-fade-in">
       <section className="hero" style={{ borderRadius: 'var(--border-radius)', overflow: 'hidden' }}>
         <h1>
-          Build your dream business with <span>OpenStore</span>
+          Build your dream business with <span>MakeShop</span>
         </h1>
         <p>
           The most customizable, high-performance e-commerce platform for modern entrepreneurs. Start selling globally today.
@@ -59,7 +59,7 @@ export default function HomePage() {
         <div className="card" style={{ maxWidth: '600px', margin: '0 auto', padding: '3rem' }}>
           <ShoppingBag size={48} color="var(--primary)" style={{ margin: '0 auto 1.5rem' }} />
           <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)' }}>
-            Join thousands of successful merchants who trust OpenStore to power their businesses.
+            Join thousands of successful merchants who trust MakeShop to power their businesses.
           </p>
           <button className="btn btn-primary" style={{ width: '100%' }}>
             

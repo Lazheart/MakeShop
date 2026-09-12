@@ -59,7 +59,7 @@ export default function AuthPage() {
             <Store size={40} />
           </div>
           <h1 style={{ fontSize: '1.75rem', margin: '0 0 0.5rem' }}>
-            {isLogin ? 'Log in to OpenStore' : 'Create an account'}
+            {isLogin ? 'Log in to MakeShop' : 'Create an account'}
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
             {isLogin ? 'Continue to your store' : 'Start your business today'}

@@ -45,7 +45,7 @@ export default function LoginPage() {
         <div style={{ marginBottom: '3rem' }}>
           <Link to="/" className="sidebar-logo" style={{ marginBottom: '1.5rem', textDecoration: 'none', color: 'inherit', display: 'inline-flex', alignItems: 'center' }}>
             <Store size={32} />
-            <span style={{ fontSize: '1.75rem', marginLeft: '0.5rem' }}>Open</span><span style={{ color: 'var(--primary)', fontSize: '1.75rem' }}>Store</span>
+            <span style={{ fontSize: '1.75rem', marginLeft: '0.5rem' }}>Make</span><span style={{ color: 'var(--primary)', fontSize: '1.75rem' }}>Shop</span>
           </Link>
           <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Welcome back</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>Enter your details to access your store dashboard.</p>
