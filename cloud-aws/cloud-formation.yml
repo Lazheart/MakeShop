@@ -58,6 +58,14 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: "Token de GitHub (opcional para repos publicos, recomendado para privados)"
+  DockerImageNamespace:
+    Type: String
+    Default: "lazheart"
+    Description: "Namespace/usuario de Docker Hub desde donde se descargan las imagenes"
+  DockerImageTag:
+    Type: String
+    Default: "latest"
+    Description: "Tag de las imagenes Docker del backend"
 
 Conditions:
   HasFrontendAmplifyAccessToken: !Not [!Equals [!Ref FrontendAmplifyAccessToken, ""]]
@@ -266,11 +274,49 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          set -e
+          set -euxo pipefail
           exec > /var/log/user-data.log 2>&1
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io docker-compose-plugin git
+          systemctl enable --now docker
+          usermod -aG docker ubuntu || true
           cd /home/ubuntu
-          git clone https://github.com/Lazheart/MakeShop
-          cd MakeShop
+          rm -rf MakeShop
+          git clone "${FrontendRepoUrl}" MakeShop
+          chown -R ubuntu:ubuntu MakeShop
+          cd MakeShop/backend
+          cat > .env <<EOF
+          DOCKER_IMAGE_NAMESPACE=${DockerImageNamespace}
+          DOCKER_IMAGE_TAG=${DockerImageTag}
+          DB_HOST=${DbServer.PrivateIp}
+          POSTGRES_DB=userdb
+          POSTGRES_USER=admin
+          POSTGRES_PASSWORD=admin123
+          DATABASE_URL=jdbc:postgresql://${DbServer.PrivateIp}:5432/userdb
+          DB_USERNAME=admin
+          DB_PASSWORD=admin123
+          DB_NAME=userdb
+          JPA_DDL_AUTO=update
+          APP_BASE_URL=https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com
+          JWT_SECRET=${AWS::StackId}
+          JWT_EXPIRATION=86400000
+          MYSQL_ROOT_PASSWORD=admin123
+          MYSQL_DATABASE=shopdb
+          MYSQL_USER=admin
+          MYSQL_PASSWORD=admin123
+          SHOP_DB_USERNAME=admin
+          SHOP_DB_PASSWORD=admin123
+          MONGO_INITDB_ROOT_USERNAME=admin
+          MONGO_INITDB_ROOT_PASSWORD=admin123
+          MONGO_INITDB_DATABASE=productdb
+          AWS_REGION=${AWS::Region}
+          BUCKET_NAME=${ImagesBucket}
+          ATHENA_DATABASE=openstore_catalog
+          ATHENA_RESULTS_BUCKET=s3://openstore-ingest-${AWS::AccountId}/athena-results/
+          EOF
+          docker compose pull
+          docker compose up -d
+          cd ..
           sudo rm -rf frontend
           sudo rm -rf database
           cd ..
@@ -296,11 +342,49 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          set -e
+          set -euxo pipefail
           exec > /var/log/user-data.log 2>&1
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io docker-compose-plugin git
+          systemctl enable --now docker
+          usermod -aG docker ubuntu || true
           cd /home/ubuntu
-          git clone https://github.com/Lazheart/MakeShop
-          cd MakeShop
+          rm -rf MakeShop
+          git clone "${FrontendRepoUrl}" MakeShop
+          chown -R ubuntu:ubuntu MakeShop
+          cd MakeShop/backend
+          cat > .env <<EOF
+          DOCKER_IMAGE_NAMESPACE=${DockerImageNamespace}
+          DOCKER_IMAGE_TAG=${DockerImageTag}
+          DB_HOST=${DbServer.PrivateIp}
+          POSTGRES_DB=userdb
+          POSTGRES_USER=admin
+          POSTGRES_PASSWORD=admin123
+          DATABASE_URL=jdbc:postgresql://${DbServer.PrivateIp}:5432/userdb
+          DB_USERNAME=admin
+          DB_PASSWORD=admin123
+          DB_NAME=userdb
+          JPA_DDL_AUTO=update
+          APP_BASE_URL=https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com
+          JWT_SECRET=${AWS::StackId}
+          JWT_EXPIRATION=86400000
+          MYSQL_ROOT_PASSWORD=admin123
+          MYSQL_DATABASE=shopdb
+          MYSQL_USER=admin
+          MYSQL_PASSWORD=admin123
+          SHOP_DB_USERNAME=admin
+          SHOP_DB_PASSWORD=admin123
+          MONGO_INITDB_ROOT_USERNAME=admin
+          MONGO_INITDB_ROOT_PASSWORD=admin123
+          MONGO_INITDB_DATABASE=productdb
+          AWS_REGION=${AWS::Region}
+          BUCKET_NAME=${ImagesBucket}
+          ATHENA_DATABASE=openstore_catalog
+          ATHENA_RESULTS_BUCKET=s3://openstore-ingest-${AWS::AccountId}/athena-results/
+          EOF
+          docker compose pull
+          docker compose up -d
+          cd ..
           sudo rm -rf frontend
           sudo rm -rf database
           cd ..
@@ -326,13 +410,32 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          set -euxo pipefail
+          exec > /var/log/user-data.log 2>&1
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io docker-compose-plugin git
+          systemctl enable --now docker
+          usermod -aG docker ubuntu || true
           cd /home/ubuntu
-          git clone https://github.com/Lazheart/MakeShop
+          rm -rf MakeShop
+          git clone "${FrontendRepoUrl}" MakeShop
+          chown -R ubuntu:ubuntu MakeShop
           cd MakeShop
           sudo rm -rf frontend
           sudo rm -rf backend
           cd database
-          sudo cp .env.example .env
+          cat > .env <<EOF
+          POSTGRES_DB=userdb
+          POSTGRES_USER=admin
+          POSTGRES_PASSWORD=admin123
+          MONGO_INITDB_ROOT_USERNAME=admin
+          MONGO_INITDB_ROOT_PASSWORD=admin123
+          MONGO_INITDB_DATABASE=productdb
+          MYSQL_ROOT_PASSWORD=admin123
+          MYSQL_DATABASE=shopdb
+          MYSQL_USER=admin
+          MYSQL_PASSWORD=admin123
+          EOF
           docker compose up -d
           cd ..
 
@@ -423,6 +526,9 @@ Outputs:
   DbServerPublicIP:
     Description: "IP publica del DB Server"
     Value: !GetAtt DbServer.PublicIp
+  DbServerPrivateIP:
+    Description: "IP privada del DB Server para backend e ingesta"
+    Value: !GetAtt DbServer.PrivateIp
   ImagesBucketName:
     Description: "Nombre del bucket S3"
     Value: !Ref ImagesBucket

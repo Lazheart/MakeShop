@@ -129,6 +129,19 @@ if [ -z "${FRONTEND_AMPLIFY_ACCESS_TOKEN:-}" ]; then
   exit 1
 fi
 
+case "${FRONTEND_AMPLIFY_ACCESS_TOKEN}" in
+  ghp_CHANGE_ME|ghp_tu_token_aqui|CHANGE_ME|"")
+    echo "FRONTEND_AMPLIFY_ACCESS_TOKEN todavia tiene un valor de ejemplo." >&2
+    echo "Crea un token real de GitHub y reemplazalo en cloud-aws/.env." >&2
+    exit 1
+    ;;
+esac
+
+if [ -n "${AWS_ACCESS_KEY_ID:-}" ] && printf '%s' "$AWS_ACCESS_KEY_ID" | grep -q 'CHANGE_ME\|EXAMPLE'; then
+  echo "AWS_ACCESS_KEY_ID todavia tiene un valor de ejemplo. Reemplaza las credenciales en cloud-aws/.env." >&2
+  exit 1
+fi
+
 # 2) Reutilizar o crear Key Pair
 if [ -z "$KEY_NAME" ]; then
   KEY_NAME="openstore-key-$(date +%Y%m%d%H%M%S)"
@@ -251,15 +264,17 @@ aws cloudformation deploy \
     InstanceName="${INSTANCE_NAME:-MV-MakeShop}" \
     AMI=ami-08d434e92c0cfa0c0 \
     KeyName="$KEY_NAME" \
-    InstanceType=t3.medium \
-    DbInstanceType=t3.medium \
+    InstanceType="${INSTANCE_TYPE:-t3.small}" \
+    DbInstanceType="${DB_INSTANCE_TYPE:-t3.small}" \
     VpcId="$VPC_ID" \
     PublicSubnet1="$SUBNET1" \
     PublicSubnet2="$SUBNET2" \
     FrontendRepoUrl="${FRONTEND_REPO_URL:-https://github.com/Lazheart/MakeShop}" \
     FrontendBranchName="${FRONTEND_BRANCH_NAME:-main}" \
     FrontendAmplifyAppName="${FRONTEND_AMPLIFY_APP_NAME:-makeshop-frontend}" \
-    FrontendAmplifyAccessToken="$FRONTEND_AMPLIFY_ACCESS_TOKEN"
+    FrontendAmplifyAccessToken="$FRONTEND_AMPLIFY_ACCESS_TOKEN" \
+    DockerImageNamespace="${DOCKER_IMAGE_NAMESPACE:-lazheart}" \
+    DockerImageTag="${DOCKER_IMAGE_TAG:-latest}"
 
 # 5) Ver outputs finales (ALB/Amplify)
 aws cloudformation describe-stacks \

@@ -1,13 +1,15 @@
 services:
   product-service:
-    image: lazheart/product-service:latest
+    image: ${DOCKER_IMAGE_NAMESPACE:-lazheart}/product-service:${DOCKER_IMAGE_TAG:-latest}
     container_name: product-service
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       - STORE_SERVICE_URL=http://store-service:8004
       - AWS_REGION=${AWS_REGION}
       - BUCKET_NAME=${BUCKET_NAME}
+      - MONGO_DATABASE=${MONGO_INITDB_DATABASE:-productdb}
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${DB_HOST}:27017/productdb?authSource=admin
@@ -18,8 +20,9 @@ services:
       retries: 5
       start_period: 20s
   shop-service:
-    image: lazheart/shop-service:latest
+    image: ${DOCKER_IMAGE_NAMESPACE:-lazheart}/shop-service:${DOCKER_IMAGE_TAG:-latest}
     container_name: shop-service
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -36,8 +39,9 @@ services:
       retries: 5
       start_period: 20s
   user-service:
-    image: lazheart/user-service:latest
+    image: ${DOCKER_IMAGE_NAMESPACE:-lazheart}/user-service:${DOCKER_IMAGE_TAG:-latest}
     container_name: user-service
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
@@ -48,6 +52,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION}
       - JPA_DDL_AUTO=${JPA_DDL_AUTO}
+      - APP_BASE_URL=${APP_BASE_URL}
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health > /dev/null"]
       interval: 10s
@@ -55,8 +60,9 @@ services:
       retries: 5
       start_period: 30s
   store-service:
-    image: lazheart/store-service:latest
+    image: ${DOCKER_IMAGE_NAMESPACE:-lazheart}/store-service:${DOCKER_IMAGE_TAG:-latest}
     container_name: store-service
+    restart: unless-stopped
     ports:
       - "8004:8004"
     depends_on:
@@ -66,3 +72,7 @@ services:
         condition: service_healthy
       product-service:
         condition: service_healthy
+    environment:
+      - AWS_REGION=${AWS_REGION}
+      - ATHENA_DATABASE=${ATHENA_DATABASE:-openstore_catalog}
+      - ATHENA_RESULTS_BUCKET=${ATHENA_RESULTS_BUCKET}
