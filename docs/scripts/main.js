@@ -71,7 +71,7 @@
 
   // ─── Navbar search ────────────────────────────────────────
   const pages = [
-    { title: 'Inicio', page: 'home', href: 'index.html', keywords: ['inicio', 'home', 'bienvenida', 'openstore', 'microservicios'] },
+    { title: 'Inicio', page: 'home', href: 'index.html', keywords: ['inicio', 'home', 'bienvenida', 'makeshop', 'microservicios'] },
     { title: 'API & Gateway', page: 'api', href: 'pages/api.html', keywords: ['api', 'gateway', 'store-service', 'endpoint', 'http', 'puerto', 'rest'] },
     { title: 'Frontend', page: 'frontend', href: 'pages/frontend.html', keywords: ['frontend', 'react', 'vite', 'tailwind', 'typescript', 'router', 'login'] },
     { title: 'Data Ingest', page: 'dataingest', href: 'pages/dataingest.html', keywords: ['data', 'ingest', 'ingesta', 'boto3', 's3', 'athena', 'csv', 'python'] },
@@ -132,7 +132,7 @@
     initSidebar();
     initSearch();
     syncYear();
-    window.OpenStoreImageZoom?.init?.();
+    window.MakeShopImageZoom?.init?.();
   };
 
   if (document.readyState === 'loading') {

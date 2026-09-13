@@ -4,7 +4,7 @@
 			key: 'home',
 			title: 'Inicio',
 			description: 'Bienvenida, mapa de documentación y scripts.',
-			terms: ['inicio', 'bienvenida', 'docs', 'documentacion', 'openstore'],
+			terms: ['inicio', 'bienvenida', 'docs', 'documentacion', 'makeshop'],
 			href: 'index.html',
 		},
 		{
@@ -130,5 +130,5 @@
 		update();
 	};
 
-	window.OpenStoreDocsSearch = { init };
+	window.MakeShopDocsSearch = { init };
 })();

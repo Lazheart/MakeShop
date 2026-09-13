@@ -15,13 +15,13 @@
 Antes de correr los contenedores, crear manualmente en la consola de AWS:
 
 1. **EC2 "MV ingesta"** — Amazon Linux 2023, instalar Docker y docker-compose
-2. **S3 bucket** — nombre: `openstore-ingest`, región: `us-east-1`
+2. **S3 bucket** — nombre: `makeshop-ingest`, región: `us-east-1`
 3. **Security Groups** — abrir puertos 5432, 3307, 27017 en el SG del servidor de microservicios hacia la IP de la MV ingesta
 4. **IAM** — crear usuario IAM con política `AmazonS3FullAccess`, generar Access Key para el `.env`
-5. **AWS Glue** — tras correr los contenedores, crear database `openstore_catalog` y 3 crawlers:
-   - `crawler-users` → `s3://openstore-ingest/users/`
-   - `crawler-shops` → `s3://openstore-ingest/shops/`
-   - `crawler-products` → `s3://openstore-ingest/products/`
+5. **AWS Glue** — tras correr los contenedores, crear database `makeshop_catalog` y 3 crawlers:
+   - `crawler-users` → `s3://makeshop-ingest/users/`
+   - `crawler-shops` → `s3://makeshop-ingest/shops/`
+   - `crawler-products` → `s3://makeshop-ingest/products/`
 
 ---
 
@@ -84,7 +84,7 @@ services:
 
 ```env
 # ============================================================
-# OPENSTORE — DataIngest ENV
+# MAKESHOP — DataIngest ENV
 # ============================================================
 
 # --- PostgreSQL (user-service) ---
@@ -109,7 +109,7 @@ MONGO_DB=productdb
 AWS_ACCESS_KEY_ID=TU_ACCESS_KEY
 AWS_SECRET_ACCESS_KEY=TU_SECRET_KEY
 AWS_REGION=us-east-1
-S3_BUCKET=openstore-ingest
+S3_BUCKET=makeshop-ingest
 
 # --- Seeder (script de población existente) ---
 STORE_SERVICE_URL=http://34.228.142.25:8004
@@ -937,8 +937,8 @@ git commit -m "feat(etl): ingest-products container MongoDB to JSON with tests"
 
 ```sql
 -- ============================================================
--- OpenStore — AWS Athena Queries
--- Base de datos: openstore_catalog
+-- MakeShop — AWS Athena Queries
+-- Base de datos: makeshop_catalog
 -- ============================================================
 
 -- ============================================================
@@ -950,8 +950,8 @@ SELECT
     p.price,
     p.availability,
     s.name        AS shop_name
-FROM openstore_catalog.products p
-JOIN openstore_catalog.shops s
+FROM makeshop_catalog.products p
+JOIN makeshop_catalog.shops s
     ON p.shopid = s.id;
 
 
@@ -964,8 +964,8 @@ SELECT
     u.email,
     u.role,
     s.name        AS shop_name
-FROM openstore_catalog.users u
-LEFT JOIN openstore_catalog.shops s
+FROM makeshop_catalog.users u
+LEFT JOIN makeshop_catalog.shops s
     ON u.shop_id = s.id
 WHERE u.role = 'USER';
 
@@ -978,10 +978,10 @@ SELECT
     u.name        AS user_name,
     u.email,
     m.role        AS membership_role
-FROM openstore_catalog.memberships m
-JOIN openstore_catalog.shops s
+FROM makeshop_catalog.memberships m
+JOIN makeshop_catalog.shops s
     ON m.shop_id = s.id
-JOIN openstore_catalog.users u
+JOIN makeshop_catalog.users u
     ON m.user_id = u.id
 ORDER BY s.name;
 
@@ -993,10 +993,10 @@ SELECT
     s.name                  AS shop_name,
     COUNT(DISTINCT p.id)    AS total_products,
     COUNT(DISTINCT u.id)    AS total_users
-FROM openstore_catalog.shops s
-LEFT JOIN openstore_catalog.products p
+FROM makeshop_catalog.shops s
+LEFT JOIN makeshop_catalog.products p
     ON p.shopid = s.id
-LEFT JOIN openstore_catalog.users u
+LEFT JOIN makeshop_catalog.users u
     ON u.shop_id = s.id
 GROUP BY s.name
 ORDER BY total_products DESC;
@@ -1006,17 +1006,17 @@ ORDER BY total_products DESC;
 -- VISTA 1: v_tienda_resumen
 -- Resumen de cada tienda con totales de productos y usuarios
 -- ============================================================
-CREATE OR REPLACE VIEW openstore_catalog.v_tienda_resumen AS
+CREATE OR REPLACE VIEW makeshop_catalog.v_tienda_resumen AS
 SELECT
     s.id                    AS shop_id,
     s.name                  AS shop_name,
     s.phone_number,
     COUNT(DISTINCT p.id)    AS total_products,
     COUNT(DISTINCT u.id)    AS total_users
-FROM openstore_catalog.shops s
-LEFT JOIN openstore_catalog.products p
+FROM makeshop_catalog.shops s
+LEFT JOIN makeshop_catalog.products p
     ON p.shopid = s.id
-LEFT JOIN openstore_catalog.users u
+LEFT JOIN makeshop_catalog.users u
     ON u.shop_id = s.id
 GROUP BY s.id, s.name, s.phone_number;
 
@@ -1025,7 +1025,7 @@ GROUP BY s.id, s.name, s.phone_number;
 -- VISTA 2: v_usuarios_tienda
 -- Usuarios con información de su tienda y membresía
 -- ============================================================
-CREATE OR REPLACE VIEW openstore_catalog.v_usuarios_tienda AS
+CREATE OR REPLACE VIEW makeshop_catalog.v_usuarios_tienda AS
 SELECT
     u.id                    AS user_id,
     u.name                  AS user_name,
@@ -1033,10 +1033,10 @@ SELECT
     u.role,
     s.name                  AS shop_name,
     m.role                  AS membership_role
-FROM openstore_catalog.users u
-LEFT JOIN openstore_catalog.shops s
+FROM makeshop_catalog.users u
+LEFT JOIN makeshop_catalog.shops s
     ON u.shop_id = s.id
-LEFT JOIN openstore_catalog.memberships m
+LEFT JOIN makeshop_catalog.memberships m
     ON m.user_id = u.id
     AND m.shop_id = s.id;
 ```
@@ -1058,9 +1058,9 @@ git commit -m "docs(etl): add Athena SQL queries and views file"
 - [ ] **Step 1: Crear `DataIngest/ER_diagram.md`**
 
 ```markdown
-# Diagrama Entidad / Relación — OpenStore Data Catalog
+# Diagrama Entidad / Relación — MakeShop Data Catalog
 
-Base de datos Glue: `openstore_catalog`
+Base de datos Glue: `makeshop_catalog`
 
 ## Tablas
 

@@ -1,13 +1,13 @@
 # ETL Pipeline — Design Spec
 **Date:** 2026-05-06  
-**Project:** OpenStore — DataIngest  
+**Project:** MakeShop — DataIngest  
 **Branch:** DataIngest
 
 ---
 
 ## Objetivo
 
-Implementar un pipeline de extracción de datos (ETL) que extraiga el 100% de los registros de las 3 bases de datos de OpenStore, genere archivos CSV/JSON y los cargue a S3 para su catalogación en AWS Glue y consulta con AWS Athena.
+Implementar un pipeline de extracción de datos (ETL) que extraiga el 100% de los registros de las 3 bases de datos de MakeShop, genere archivos CSV/JSON y los cargue a S3 para su catalogación en AWS Glue y consulta con AWS Athena.
 
 ---
 
@@ -16,8 +16,8 @@ Implementar un pipeline de extracción de datos (ETL) que extraiga el 100% de lo
 | Recurso | Nombre | Descripción |
 |---------|--------|-------------|
 | EC2 | MV ingesta | Máquina virtual separada donde corren los contenedores |
-| S3 Bucket | `openstore-ingest` | Almacena los archivos de ingesta |
-| AWS Glue DB | `openstore_catalog` | Base de datos del catálogo de datos |
+| S3 Bucket | `makeshop-ingest` | Almacena los archivos de ingesta |
+| AWS Glue DB | `makeshop_catalog` | Base de datos del catálogo de datos |
 | AWS Region | `us-east-1` | Región de todos los recursos |
 
 ### Prerequisito de red
@@ -69,7 +69,7 @@ DataIngest/
 **Tabla:** `users`  
 **Campos extraídos:** `id, name, email, phone_number, role, subscription, shop_id, enabled, email_verified, token_version, created_at, updated_at`  
 **Archivo:** `users.csv`  
-**Destino S3:** `s3://openstore-ingest/users/users.csv`
+**Destino S3:** `s3://makeshop-ingest/users/users.csv`
 
 ### `ingest-shops` — MySQL → CSV
 
@@ -78,7 +78,7 @@ DataIngest/
 **Campos shops:** `id, name, owner_id, phone_number`  
 **Campos memberships:** `id, user_id, role, shop_id`  
 **Archivos:** `shops.csv`, `memberships.csv`  
-**Destino S3:** `s3://openstore-ingest/shops/shops.csv`, `s3://openstore-ingest/shops/memberships.csv`
+**Destino S3:** `s3://makeshop-ingest/shops/shops.csv`, `s3://makeshop-ingest/shops/memberships.csv`
 
 ### `ingest-products` — MongoDB → JSON
 
@@ -86,7 +86,7 @@ DataIngest/
 **Colección:** `products`  
 **Campos extraídos:** `id, name, price, description, imageUrl, availability, shopId`  
 **Archivo:** `products.json` (array de objetos)  
-**Destino S3:** `s3://openstore-ingest/products/products.json`
+**Destino S3:** `s3://makeshop-ingest/products/products.json`
 
 ---
 
@@ -129,7 +129,7 @@ MONGO_URI=mongodb://admin:admin123@34.228.142.25:27017/productdb
 AWS_ACCESS_KEY_ID=TU_ACCESS_KEY
 AWS_SECRET_ACCESS_KEY=TU_SECRET_KEY
 AWS_REGION=us-east-1
-S3_BUCKET=openstore-ingest
+S3_BUCKET=makeshop-ingest
 ```
 
 ---
@@ -137,7 +137,7 @@ S3_BUCKET=openstore-ingest
 ## S3 — Estructura del bucket
 
 ```
-s3://openstore-ingest/
+s3://makeshop-ingest/
 ├── users/
 │   └── users.csv
 ├── shops/
@@ -151,13 +151,13 @@ s3://openstore-ingest/
 
 ## AWS Glue — Catálogo de datos
 
-**Base de datos Glue:** `openstore_catalog`
+**Base de datos Glue:** `makeshop_catalog`
 
 | Crawler | Prefijo S3 | Tablas generadas |
 |---------|-----------|-----------------|
-| `crawler-users` | `s3://openstore-ingest/users/` | `users` |
-| `crawler-shops` | `s3://openstore-ingest/shops/` | `shops`, `memberships` |
-| `crawler-products` | `s3://openstore-ingest/products/` | `products` |
+| `crawler-users` | `s3://makeshop-ingest/users/` | `users` |
+| `crawler-shops` | `s3://makeshop-ingest/shops/` | `shops`, `memberships` |
+| `crawler-products` | `s3://makeshop-ingest/products/` | `products` |
 
 Los crawlers se configuran manualmente en la consola de AWS Glue apuntando a cada prefijo S3. Tras correr los crawlers, el catálogo tendrá 4 tablas.
 
@@ -212,24 +212,24 @@ Los crawlers se configuran manualmente en la consola de AWS Glue apuntando a cad
 ### Query 1: Productos con nombre de tienda
 ```sql
 SELECT p.id, p.name, p.price, p.availability, s.name AS shop_name
-FROM openstore_catalog.products p
-JOIN openstore_catalog.shops s ON p.shopid = s.id;
+FROM makeshop_catalog.products p
+JOIN makeshop_catalog.shops s ON p.shopid = s.id;
 ```
 
 ### Query 2: Usuarios con su tienda asignada
 ```sql
 SELECT u.id, u.name, u.email, u.role, s.name AS shop_name
-FROM openstore_catalog.users u
-LEFT JOIN openstore_catalog.shops s ON u.shop_id = s.id
+FROM makeshop_catalog.users u
+LEFT JOIN makeshop_catalog.shops s ON u.shop_id = s.id
 WHERE u.role = 'USER';
 ```
 
 ### Query 3: Miembros por tienda con su rol
 ```sql
 SELECT s.name AS shop_name, u.name AS user_name, u.email, m.role
-FROM openstore_catalog.memberships m
-JOIN openstore_catalog.shops s ON m.shop_id = s.id
-JOIN openstore_catalog.users u ON m.user_id = u.id
+FROM makeshop_catalog.memberships m
+JOIN makeshop_catalog.shops s ON m.shop_id = s.id
+JOIN makeshop_catalog.users u ON m.user_id = u.id
 ORDER BY s.name;
 ```
 
@@ -239,31 +239,31 @@ SELECT
     s.name AS shop_name,
     COUNT(DISTINCT p.id) AS total_products,
     COUNT(DISTINCT u.id) AS total_users
-FROM openstore_catalog.shops s
-LEFT JOIN openstore_catalog.products p ON p.shopid = s.id
-LEFT JOIN openstore_catalog.users u ON u.shop_id = s.id
+FROM makeshop_catalog.shops s
+LEFT JOIN makeshop_catalog.products p ON p.shopid = s.id
+LEFT JOIN makeshop_catalog.users u ON u.shop_id = s.id
 GROUP BY s.name
 ORDER BY total_products DESC;
 ```
 
 ### Vista 1: `v_tienda_resumen`
 ```sql
-CREATE OR REPLACE VIEW openstore_catalog.v_tienda_resumen AS
+CREATE OR REPLACE VIEW makeshop_catalog.v_tienda_resumen AS
 SELECT 
     s.id AS shop_id,
     s.name AS shop_name,
     s.phone_number,
     COUNT(DISTINCT p.id) AS total_products,
     COUNT(DISTINCT u.id) AS total_users
-FROM openstore_catalog.shops s
-LEFT JOIN openstore_catalog.products p ON p.shopid = s.id
-LEFT JOIN openstore_catalog.users u ON u.shop_id = s.id
+FROM makeshop_catalog.shops s
+LEFT JOIN makeshop_catalog.products p ON p.shopid = s.id
+LEFT JOIN makeshop_catalog.users u ON u.shop_id = s.id
 GROUP BY s.id, s.name, s.phone_number;
 ```
 
 ### Vista 2: `v_usuarios_tienda`
 ```sql
-CREATE OR REPLACE VIEW openstore_catalog.v_usuarios_tienda AS
+CREATE OR REPLACE VIEW makeshop_catalog.v_usuarios_tienda AS
 SELECT 
     u.id AS user_id,
     u.name AS user_name,
@@ -271,9 +271,9 @@ SELECT
     u.role,
     s.name AS shop_name,
     m.role AS membership_role
-FROM openstore_catalog.users u
-LEFT JOIN openstore_catalog.shops s ON u.shop_id = s.id
-LEFT JOIN openstore_catalog.memberships m ON m.user_id = u.id AND m.shop_id = s.id;
+FROM makeshop_catalog.users u
+LEFT JOIN makeshop_catalog.shops s ON u.shop_id = s.id
+LEFT JOIN makeshop_catalog.memberships m ON m.user_id = u.id AND m.shop_id = s.id;
 ```
 
 ---

@@ -1,13 +1,13 @@
 # Seeder Script — Design Spec
 **Date:** 2026-05-06  
-**Project:** OpenStore  
+**Project:** MakeShop  
 **Author:** Los-1000
 
 ---
 
 ## Objetivo
 
-Script Python de ingesta de datos para poblar el entorno de OpenStore con datos de prueba realistas:
+Script Python de ingesta de datos para poblar el entorno de MakeShop con datos de prueba realistas:
 - 10 tiendas, cada una con su propio owner administrador
 - 200 productos por tienda
 - 100 usuarios normales por tienda
@@ -125,7 +125,7 @@ Para cada tienda (secuencial entre tiendas):
 ## Salida esperada
 
 ```
-[1/10] Registrando owner: owner1@openstore.dev ...OK
+[1/10] Registrando owner: owner1@makeshop.dev ...OK
 [1/10] Creando tienda: TiendaEjemplo S.A. ...OK (shopId: abc-123)
 [1/10] Creando 200 productos y 100 usuarios en paralelo...
 [1/10] ✓ 200 productos | 100 usuarios
