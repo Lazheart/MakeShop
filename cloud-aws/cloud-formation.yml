@@ -129,10 +129,21 @@ Resources:
           ToPort: 22
           CidrIp: "0.0.0.0/0"
 
+  IngestServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Ingest Server: Ingestion VM"
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+
   DbServerSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: "DB Server: PostgreSQL/MySQL/Mongo accesibles publicamente (segun requerimiento)"
+      GroupDescription: "DB Server: PostgreSQL, MySQL y Mongo solo accesibles desde App e Ingest"
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: "tcp"
@@ -142,15 +153,27 @@ Resources:
         - IpProtocol: "tcp"
           FromPort: 5432
           ToPort: 5432
-          CidrIp: "0.0.0.0/0"
+          SourceSecurityGroupId: !Ref AppServerSecurityGroup
+        - IpProtocol: "tcp"
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref IngestServerSecurityGroup
         - IpProtocol: "tcp"
           FromPort: 27017
           ToPort: 27017
-          CidrIp: "0.0.0.0/0"
+          SourceSecurityGroupId: !Ref AppServerSecurityGroup
+        - IpProtocol: "tcp"
+          FromPort: 27017
+          ToPort: 27017
+          SourceSecurityGroupId: !Ref IngestServerSecurityGroup
         - IpProtocol: "tcp"
           FromPort: 3307
           ToPort: 3307
-          CidrIp: "0.0.0.0/0"
+          SourceSecurityGroupId: !Ref AppServerSecurityGroup
+        - IpProtocol: "tcp"
+          FromPort: 3307
+          ToPort: 3307
+          SourceSecurityGroupId: !Ref IngestServerSecurityGroup
 
   ApplicationLoadBalancer:
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
@@ -439,6 +462,71 @@ Resources:
           docker compose up -d
           cd ..
 
+  DbServerEIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref DbServer
+
+  IngestServer:
+    Type: "AWS::EC2::Instance"
+    DependsOn: DbServer
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: !Sub "${InstanceName}-Ingest"
+      ImageId: !Ref AMI
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: "LabInstanceProfile"
+      SecurityGroupIds:
+        - !Ref IngestServerSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: "30"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          exec > /var/log/user-data.log 2>&1
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io docker-compose-plugin git python3-pip
+          systemctl enable --now docker
+          usermod -aG docker ubuntu || true
+          cd /home/ubuntu
+          rm -rf MakeShop
+          git clone "${FrontendRepoUrl}" MakeShop
+          chown -R ubuntu:ubuntu MakeShop
+          cd MakeShop/dataingest
+          cat > .env <<EOF
+          POSTGRES_HOST=${DbServer.PrivateIp}
+          POSTGRES_PORT=5432
+          POSTGRES_DB=userdb
+          POSTGRES_USER=admin
+          POSTGRES_PASSWORD=admin123
+          MYSQL_HOST=${DbServer.PrivateIp}
+          MYSQL_PORT=3307
+          MYSQL_DB=shopdb
+          MYSQL_USER=admin
+          MYSQL_PASSWORD=admin123
+          MONGO_URI=mongodb://admin:admin123@${DbServer.PrivateIp}:27017/productdb?authSource=admin
+          MONGO_DB=productdb
+          AWS_REGION=${AWS::Region}
+          S3_BUCKET=openstore-ingest-${AWS::AccountId}
+          NUM_SHOPS=100
+          PRODUCTS_PER_SHOP=200
+          USERS_PER_SHOP=100
+          EOF
+          chown ubuntu:ubuntu .env
+
+  IngestServerEIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref IngestServer
+
   ImagesBucket:
     Type: "AWS::S3::Bucket"
     Properties:
@@ -524,11 +612,17 @@ Outputs:
     Description: "IP publica del App Server 2"
     Value: !GetAtt AppServer2.PublicIp
   DbServerPublicIP:
-    Description: "IP publica del DB Server"
-    Value: !GetAtt DbServer.PublicIp
+    Description: "IP publica fija (Elastic IP) del DB Server"
+    Value: !Ref DbServerEIP
   DbServerPrivateIP:
     Description: "IP privada del DB Server para backend e ingesta"
     Value: !GetAtt DbServer.PrivateIp
+  IngestServerPublicIP:
+    Description: "IP publica fija (Elastic IP) del Ingest Server"
+    Value: !Ref IngestServerEIP
+  IngestServerPrivateIP:
+    Description: "IP privada del Ingest Server"
+    Value: !GetAtt IngestServer.PrivateIp
   ImagesBucketName:
     Description: "Nombre del bucket S3"
     Value: !Ref ImagesBucket
